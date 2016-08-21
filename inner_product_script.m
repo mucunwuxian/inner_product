@@ -3,8 +3,8 @@ clear all;
 close all;
 
 
-feat_dim = 8 * 8 * 1000000;
-calc_num = 100;
+feat_dim = 8 * 12 * 8 * 20000;
+calc_num = 200;
 
 w = randn(feat_dim, 1);
 x = randn(feat_dim, 1);
@@ -48,11 +48,11 @@ end
 time = toc;
 fprintf('vector’·:%d, mex+openmp+avx‚Å‚Ì“àÏŒvZŠÔ:%.2f\n', size(w, 1), time);
 
-tic;
-w_s = gpuArray(single(w));
-x_s = gpuArray(single(x));
-for calc_i = 1:calc_num
-    y_matlab_gpu = w' * x;
-end
-time = toc;
-fprintf('vector’·:%d, matlab(gpu)   ‚Å‚Ì“àÏŒvZŠÔ:%f\n', size(w, 1), time);
+% tic;
+% w_s = gpuArray(single(w));
+% x_s = gpuArray(single(x));
+% for calc_i = 1:calc_num
+%     y_matlab_gpu = w' * x;
+% end
+% time = toc;
+% fprintf('vector’·:%d, matlab(gpu)   ‚Å‚Ì“àÏŒvZŠÔ:%f\n', size(w, 1), time);

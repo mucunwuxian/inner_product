@@ -11,26 +11,37 @@ float calc_function(float* w, float* x, int in_dim_i_begin, int in_dim_i_end)
 	float* w_ptr = w + in_dim_i_begin;
 	float* x_ptr = x + in_dim_i_begin;
 	
-	__m256 w_x8;
-	__m256 x_x8;
-	__m256 wx_x8;
-	__m256 sum_x8;
+	__m256 w_x8_1;
+	__m256 x_x8_1;
+	__m256 wx_x8_1;
+	__m256 sum_x8_1;
+	__m256 w_x8_2;
+	__m256 x_x8_2;
+	__m256 wx_x8_2;
+	__m256 sum_x8_2;
 	
-	sum_x8 = _mm256_set_ps(0, 0, 0, 0, 0, 0, 0, 0);
+	sum_x8_1 = _mm256_set_ps(0, 0, 0, 0, 0, 0, 0, 0);
+	sum_x8_2 = _mm256_set_ps(0, 0, 0, 0, 0, 0, 0, 0);
 
-	for (in_dim_i = in_dim_i_begin; in_dim_i <= (in_dim_i_end - 8 + 1); in_dim_i += 8)
+	for (in_dim_i = in_dim_i_begin; in_dim_i <= (in_dim_i_end - 16 + 1); in_dim_i += 16)
 	{
-		w_x8   = _mm256_load_ps(w_ptr);
-		x_x8   = _mm256_load_ps(x_ptr);
-		wx_x8  = _mm256_mul_ps(w_x8, x_x8);
-		sum_x8 = _mm256_add_ps(sum_x8, wx_x8);
+		w_x8_1   = _mm256_load_ps(w_ptr);
+		x_x8_1   = _mm256_load_ps(x_ptr);
+		sum_x8_1 = _mm256_add_ps(sum_x8_1, _mm256_mul_ps(w_x8_1, x_x8_1));
+
+		w_ptr += 8;
+		x_ptr += 8;
+		
+        w_x8_2   = _mm256_load_ps(w_ptr);
+		x_x8_2   = _mm256_load_ps(x_ptr);
+		sum_x8_2 = _mm256_add_ps(sum_x8_2, _mm256_mul_ps(w_x8_2, x_x8_2));
 
 		w_ptr += 8;
 		x_ptr += 8;
 	}
 	
 	float sum[8] = {0};
-	_mm256_store_ps(sum, sum_x8);
+	_mm256_store_ps(sum, _mm256_add_ps(sum_x8_1, sum_x8_2));
 
 	return sum[0] + sum[1] + sum[2] + sum[3] + sum[4] + sum[5] + sum[6] + sum[7];
 }
@@ -42,7 +53,7 @@ void mexFunction(int nlhs,       mxArray *plhs[],
 	if(nrhs != 2) { mexErrMsgTxt("Wrong number of input  arguments."); }
 	if(nlhs != 1) {	mexErrMsgTxt("Wrong number of output arguments."); }
 	if(mxGetClassID(prhs[0]) != mxSINGLE_CLASS) { mexErrMsgTxt("w must be a real vector."); }
-	if(mxGetClassID(prhs[1]) != mxSINGLE_CLASS) { mexErrMsgTxt("w must be a real vector."); }
+	if(mxGetClassID(prhs[1]) != mxSINGLE_CLASS) { mexErrMsgTxt("x must be a real vector."); }
 
 	// get input value
 	float *w, *x;
@@ -75,7 +86,7 @@ void mexFunction(int nlhs,       mxArray *plhs[],
 	in_dim_i_end[num_thread - 1] = in_dim - 1;
 	
 	float* sum = new float[num_thread];
-	//#pragma omp parallel for num_threads(num_thread)
+	#pragma omp parallel for num_threads(num_thread)
 	for (thread_i = 0; thread_i < num_thread; thread_i++)
 	{
 		sum[thread_i] = calc_function(w, x, in_dim_i_begin[thread_i], in_dim_i_end[thread_i]);
